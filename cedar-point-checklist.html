@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cedar Point — Ride Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --lake:#081420;
+    --panel:#0F2739;
+    --panel-2:#143349;
+    --ink:#E9F2F8;
+    --muted:#7C9CB3;
+    --bulb:#FFD22E;
+    --heart:#FF4D6D;
+    --line:rgba(124,156,179,.22);
+    --r:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--lake);
+    color:var(--ink);
+    font-family:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:0 0 48px;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px}
+
+  /* ---- Marquee header ---- */
+  header{
+    padding:26px 0 18px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:18px;
+  }
+  .eyebrow{
+    font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 8px;
+  }
+  h1{
+    font-family:"Archivo Black","Space Grotesk",sans-serif;
+    font-size:clamp(30px,9vw,46px);
+    line-height:.94;letter-spacing:-.015em;
+    margin:0 0 16px;text-transform:uppercase;
+  }
+  h1 em{font-style:normal;color:var(--bulb);display:block}
+
+  /* signature: one bulb per coaster */
+  .bulbs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+  .bulb{
+    width:13px;height:13px;border-radius:50%;
+    background:var(--panel-2);
+    border:1px solid rgba(255,210,46,.25);
+    transition:background .25s ease, box-shadow .25s ease;
+  }
+  .bulb.on{
+    background:var(--bulb);
+    box-shadow:0 0 10px rgba(255,210,46,.65);
+    border-color:var(--bulb);
+  }
+  .tally{
+    display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;
+    font-size:13px;color:var(--muted);
+  }
+  .tally b{
+    font-family:"Archivo Black",sans-serif;font-size:20px;color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .tally .heart b{color:var(--heart)}
+
+  /* ---- Filters ---- */
+  .filters{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;-webkit-overflow-scrolling:touch}
+  .filters button{
+    flex:0 0 auto;background:transparent;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;
+    padding:7px 14px;font:inherit;font-size:13px;cursor:pointer;
+    white-space:nowrap;
+  }
+  .filters button[aria-pressed="true"]{background:var(--ink);color:var(--lake);border-color:var(--ink);font-weight:700}
+  .filters button:focus-visible,.row button:focus-visible,.reset:focus-visible{outline:2px solid var(--bulb);outline-offset:2px}
+
+  /* ---- Groups + rows ---- */
+  h2{
+    font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--muted);font-weight:500;
+    margin:26px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line);
+  }
+  .row{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 12px;margin-bottom:6px;
+    background:var(--panel);border-radius:var(--r);
+    border:1px solid transparent;
+  }
+  .row.ridden{background:var(--panel-2);border-color:rgba(255,210,46,.28)}
+  .name{flex:1;min-width:0}
+  .name .t{font-weight:500;font-size:15px;line-height:1.25}
+  .row.ridden .name .t{color:var(--bulb)}
+  .name .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .tag{
+    display:inline-block;margin-left:6px;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--lake);background:var(--muted);
+    border-radius:3px;padding:1px 4px;vertical-align:1px;
+  }
+  .row button{
+    flex:0 0 auto;width:42px;height:42px;border-radius:var(--r);
+    background:rgba(255,255,255,.05);border:1px solid var(--line);
+    color:var(--muted);font-size:19px;line-height:1;cursor:pointer;
+    display:grid;place-items:center;transition:transform .12s ease;
+  }
+  .row button:active{transform:scale(.92)}
+  .row .did[aria-pressed="true"]{background:var(--bulb);border-color:var(--bulb);color:var(--lake)}
+  .row .fav[aria-pressed="true"]{background:var(--heart);border-color:var(--heart);color:#fff}
+  .row .fav{font-size:16px}
+
+  footer{margin-top:30px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .note{font-size:11.5px;color:var(--muted);max-width:420px;line-height:1.5}
+  .reset{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:999px;padding:7px 14px;font:inherit;font-size:12px;cursor:pointer}
+  .acts{display:flex;gap:8px;flex-wrap:wrap}
+  .status{font-size:11.5px;color:var(--muted);min-height:16px;margin-top:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Sandusky, Ohio · 2026 season</p>
+    <h1>Cedar Point<em>Ride Card</em></h1>
+    <div class="bulbs" id="bulbs" aria-hidden="true"></div>
+    <div class="tally">
+      <span><b id="cCount">0</b> / 18 coasters</span>
+      <span><b id="aCount">0</b> / <span id="aTotal">0</span> rides total</span>
+      <span class="heart"><b id="fCount">0</b> loved</span>
+    </div>
+    <p class="status" id="status"></p>
+  </header>
+
+  <nav class="filters" id="filters" aria-label="Filter rides">
+    <button data-f="all" aria-pressed="true">Everything</button>
+    <button data-f="Roller coasters" aria-pressed="false">Coasters</button>
+    <button data-f="Thrill rides" aria-pressed="false">Thrill</button>
+    <button data-f="Family &amp; classics" aria-pressed="false">Family</button>
+    <button data-f="todo" aria-pressed="false">Not yet ridden</button>
+    <button data-f="loved" aria-pressed="false">Loved</button>
+  </nav>
+
+  <main id="list"></main>
+
+  <footer>
+    <p class="note">Tap <b>✓</b> once you've ridden it, <b>♥</b> for the ones worth a re-ride. Saved as you go — use the backup code if you switch phones or browsers.</p>
+    <div class="acts">
+      <button class="reset" id="backup">Copy backup code</button>
+      <button class="reset" id="restore">Restore from code</button>
+      <button class="reset" id="reset">Clear all</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+const RIDES = [
+  {g:"Roller coasters", n:"Siren's Curse", s:"Boardwalk · tilt coaster, 160 ft", tag:"New"},
+  {g:"Roller coasters", n:"Top Thrill 2", s:"Top Thrill Midway · 420 ft, 120 mph", tag:"FL+"},
+  {g:"Roller coasters", n:"Steel Vengeance", s:"Frontier Town · hybrid, 205 ft", tag:"FL+"},
+  {g:"Roller coasters", n:"Millennium Force", s:"Millennium Midway · giga, 310 ft", tag:"FL+"},
+  {g:"Roller coasters", n:"Maverick", s:"Frontier Town · launched, 95° drop", tag:"FL+"},
+  {g:"Roller coasters", n:"Magnum XL-200", s:"Gemini Midway · the original hyper, 205 ft"},
+  {g:"Roller coasters", n:"Valravn", s:"Main Midway · dive coaster, 223 ft", tag:"FL+"},
+  {g:"Roller coasters", n:"GateKeeper", s:"Boardwalk · wing coaster, 170 ft"},
+  {g:"Roller coasters", n:"Raptor", s:"Main Midway · inverted, 137 ft"},
+  {g:"Roller coasters", n:"Rougarou", s:"Millennium Midway · floorless, 145 ft"},
+  {g:"Roller coasters", n:"Gemini", s:"Gemini Midway · racing coaster, 125 ft"},
+  {g:"Roller coasters", n:"Blue Streak", s:"Main Midway · wooden, 1964"},
+  {g:"Roller coasters", n:"Corkscrew", s:"Top Thrill Midway · three inversions, 1976"},
+  {g:"Roller coasters", n:"Iron Dragon", s:"Millennium Midway · suspended"},
+  {g:"Roller coasters", n:"Cedar Creek Mine Ride", s:"Frontier Town · mine train, 1969"},
+  {g:"Roller coasters", n:"Wild Mouse", s:"Boardwalk · spinning coaster"},
+  {g:"Roller coasters", n:"Woodstock Express", s:"Camp Snoopy · junior coaster"},
+  {g:"Roller coasters", n:"Wilderness Run", s:"Camp Snoopy · kiddie credit"},
+
+  {g:"Thrill rides", n:"Power Tower", s:"Top Thrill Midway · shot & drop towers"},
+  {g:"Thrill rides", n:"maXair", s:"Boardwalk · giant frisbee"},
+  {g:"Thrill rides", n:"Skyhawk", s:"Frontier Trail · screamin' swing, 125 ft"},
+  {g:"Thrill rides", n:"WindSeeker", s:"Boardwalk · swings at 301 ft"},
+  {g:"Thrill rides", n:"SlingShot", s:"Gemini Midway · reverse bungee", tag:"Extra $"},
+  {g:"Thrill rides", n:"Professor Delbert's Frontier Fling", s:"Frontier Trail · skycoaster", tag:"Extra $"},
+  {g:"Thrill rides", n:"Pipe Scream", s:"Gemini Midway · skater coaster"},
+  {g:"Thrill rides", n:"Super Himalaya", s:"Top Thrill Midway"},
+  {g:"Thrill rides", n:"Troika", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Matterhorn", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Atomic Scrambler", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Calypso", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Dodgem", s:"Boardwalk · bumper cars"},
+  {g:"Thrill rides", n:"Ocean Motion", s:"Main Midway · pirate ship"},
+  {g:"Thrill rides", n:"Wave Swinger", s:"Frontier Town"},
+  {g:"Thrill rides", n:"Cedar Downs Racing Derby", s:"Main Midway · racing carousel, 1921"},
+
+  {g:"Family & classics", n:"Thunder Canyon", s:"Frontier Trail · river rapids", tag:"Wet"},
+  {g:"Family & classics", n:"Giant Wheel", s:"Boardwalk · 136 ft"},
+  {g:"Family & classics", n:"Sky Ride", s:"Main Midway · gondola"},
+  {g:"Family & classics", n:"Cedar Point & Lake Erie Railroad", s:"Millennium Midway ↔ Frontier Town"},
+  {g:"Family & classics", n:"Midway Carousel", s:"Main Midway · Muller, 1912"},
+  {g:"Family & classics", n:"Cadillac Cars", s:"Main Midway · antique cars"},
+  {g:"Family & classics", n:"Lake Erie Eagles", s:"Gemini Midway"}
+];
+
+const KEY = "cedarpoint-rides-v1";
+const COASTERS = RIDES.filter(r => r.g === "Roller coasters").length;
+let state = { ridden: [], loved: [] };
+let filter = "all";
+
+const $ = id => document.getElementById(id);
+const list = $("list");
+
+function id(n){ return n.replace(/[^a-z0-9]/gi,"").toLowerCase(); }
+
+/* ---- Persistence: three layers, whichever the environment allows ----
+   1. window.storage  — works when this runs as a Claude artifact
+   2. localStorage    — works when the file is saved and opened in a real browser
+   3. URL hash        — survives everything; bookmark or text the link to yourself   */
+
+function apply(p){
+  if (!p) return false;
+  state.ridden = Array.isArray(p.ridden) ? p.ridden : [];
+  state.loved  = Array.isArray(p.loved)  ? p.loved  : [];
+  return true;
+}
+
+function fromHash(){
+  try {
+    const h = location.hash.slice(1);
+    if (!h) return null;
+    return JSON.parse(decodeURIComponent(escape(atob(h))));
+  } catch(e){ return null; }
+}
+
+function toHash(){
+  try { return btoa(unescape(encodeURIComponent(JSON.stringify(state)))); }
+  catch(e){ return ""; }
+}
+
+const where = [];
+async function load(){
+  let loaded = false;
+  try {
+    const res = await window.storage.get(KEY);
+    if (res && res.value && apply(JSON.parse(res.value))) loaded = true;
+    where.push("cloud");
+  } catch(e){ /* not available or nothing saved */ }
+  if (!loaded) {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw && apply(JSON.parse(raw))) loaded = true;
+    } catch(e){}
+  }
+  if (!loaded) apply(fromHash());
+  try { localStorage.setItem(KEY + "-probe","1"); localStorage.removeItem(KEY + "-probe"); where.push("this device"); } catch(e){}
+}
+
+let saving;
+function save(){
+  clearTimeout(saving);
+  saving = setTimeout(async () => {
+    let ok = false;
+    try { await window.storage.set(KEY, JSON.stringify(state)); ok = true; } catch(e){}
+    try { localStorage.setItem(KEY, JSON.stringify(state)); ok = true; } catch(e){}
+    try { history.replaceState(null, "", "#" + toHash()); } catch(e){}
+    $("status").textContent = ok
+      ? "Saved to " + (where.length ? where.join(" + ") : "this page") + " · the link above is also your backup"
+      : "No storage here — copy your backup code below to keep this.";
+  }, 250);
+}
+
+function toggle(arr, key){
+  const i = arr.indexOf(key);
+  if (i === -1) arr.push(key); else arr.splice(i,1);
+}
+
+function visible(r){
+  const k = id(r.n);
+  if (filter === "all") return true;
+  if (filter === "todo") return !state.ridden.includes(k);
+  if (filter === "loved") return state.loved.includes(k);
+  return r.g === filter;
+}
+
+function render(){
+  // bulbs = one per coaster
+  const riddenCoasters = RIDES.filter(r => r.g === "Roller coasters" && state.ridden.includes(id(r.n))).length;
+  $("bulbs").innerHTML = Array.from({length: COASTERS}, (_,i) =>
+    `<span class="bulb${i < riddenCoasters ? " on" : ""}"></span>`).join("");
+  $("cCount").textContent = riddenCoasters;
+  $("aCount").textContent = state.ridden.length;
+  $("aTotal").textContent = RIDES.length;
+  $("fCount").textContent = state.loved.length;
+
+  const groups = ["Roller coasters","Thrill rides","Family & classics"];
+  let html = "";
+  groups.forEach(g => {
+    const items = RIDES.filter(r => r.g === g && visible(r));
+    if (!items.length) return;
+    html += `<h2>${g}</h2>`;
+    items.forEach(r => {
+      const k = id(r.n);
+      const did = state.ridden.includes(k), fav = state.loved.includes(k);
+      html += `<div class="row${did ? " ridden" : ""}">
+        <div class="name">
+          <div class="t">${r.n}${r.tag ? `<span class="tag">${r.tag}</span>` : ""}</div>
+          <div class="s">${r.s}</div>
+        </div>
+        <button class="did" data-k="${k}" data-a="ridden" aria-pressed="${did}" aria-label="Ridden ${r.n}">✓</button>
+        <button class="fav" data-k="${k}" data-a="loved" aria-pressed="${fav}" aria-label="Loved ${r.n}">♥</button>
+      </div>`;
+    });
+  });
+  if (!html) html = `<h2>Nothing here</h2><p class="note">No rides match this filter yet.</p>`;
+  list.innerHTML = html;
+}
+
+list.addEventListener("click", e => {
+  const b = e.target.closest("button[data-k]");
+  if (!b) return;
+  toggle(b.dataset.a === "ridden" ? state.ridden : state.loved, b.dataset.k);
+  render(); save();
+});
+
+$("filters").addEventListener("click", e => {
+  const b = e.target.closest("button[data-f]");
+  if (!b) return;
+  filter = b.dataset.f;
+  [...$("filters").children].forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+});
+
+$("backup").addEventListener("click", async () => {
+  const code = toHash();
+  try { await navigator.clipboard.writeText(code); $("status").textContent = "Backup code copied — paste it somewhere safe."; }
+  catch(e){ prompt("Copy this backup code:", code); }
+});
+
+$("restore").addEventListener("click", () => {
+  const code = prompt("Paste a backup code:");
+  if (!code) return;
+  try {
+    const p = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+    if (!apply(p)) throw 0;
+    render(); save();
+  } catch(e){ $("status").textContent = "That code didn't read as valid — check for missing characters."; }
+});
+
+$("reset").addEventListener("click", () => {
+  if (!confirm("Clear every tick and heart?")) return;
+  state = { ridden: [], loved: [] };
+  render(); save();
+});
+
+(async () => { await load(); render(); })();
+</script>
+</body>
+</html>
