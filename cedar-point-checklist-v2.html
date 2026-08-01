@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cedar Point — Ride Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --lake:#081420; --panel:#0F2739; --panel-2:#143349;
+    --ink:#E9F2F8; --muted:#7C9CB3;
+    --bulb:#FFD22E; --heart:#FF4D6D;
+    --line:rgba(124,156,179,.22); --r:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--lake);color:var(--ink);
+    font-family:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;padding:0 0 56px}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px}
+
+  header{padding:26px 0 16px;border-bottom:1px solid var(--line);margin-bottom:14px}
+  .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  h1{font-family:"Archivo Black","Space Grotesk",sans-serif;font-size:clamp(30px,9vw,46px);
+    line-height:.94;letter-spacing:-.015em;margin:0 0 16px;text-transform:uppercase}
+  h1 em{font-style:normal;color:var(--bulb);display:block}
+  .bulbs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+  .bulb{width:13px;height:13px;border-radius:50%;background:var(--panel-2);
+    border:1px solid rgba(255,210,46,.25);transition:background .25s,box-shadow .25s}
+  .bulb.on{background:var(--bulb);box-shadow:0 0 10px rgba(255,210,46,.65);border-color:var(--bulb)}
+  .tally{display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  .tally b{font-family:"Archivo Black",sans-serif;font-size:20px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .champ{font-size:13px;color:var(--muted);margin:10px 0 0}
+  .champ b{color:var(--bulb);font-weight:500}
+
+  .seg{display:flex;gap:6px;background:var(--panel);border-radius:999px;padding:4px;margin:0 0 14px}
+  .seg button{flex:1;background:transparent;border:0;border-radius:999px;padding:9px 8px;
+    color:var(--muted);font:inherit;font-size:14px;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:var(--lake);font-weight:700}
+
+  .filters{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;-webkit-overflow-scrolling:touch}
+  .filters button{flex:0 0 auto;background:transparent;color:var(--muted);border:1px solid var(--line);
+    border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+  .filters button[aria-pressed="true"]{background:var(--ink);color:var(--lake);border-color:var(--ink);font-weight:700}
+  button:focus-visible{outline:2px solid var(--bulb);outline-offset:2px}
+
+  h2{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:500;
+    margin:24px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  h2:first-child{margin-top:4px}
+  .row{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:6px;
+    background:var(--panel);border-radius:var(--r);border:1px solid transparent}
+  .row.ridden{background:var(--panel-2);border-color:rgba(255,210,46,.28)}
+  .name{flex:1;min-width:0}
+  .name .t{font-weight:500;font-size:15px;line-height:1.25}
+  .row.ridden .name .t{color:var(--bulb)}
+  .name .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .tag{display:inline-block;margin-left:6px;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--lake);background:var(--muted);border-radius:3px;padding:1px 4px;vertical-align:1px}
+  .row .act{flex:0 0 auto;width:42px;height:42px;border-radius:var(--r);background:rgba(255,255,255,.05);
+    border:1px solid var(--line);color:var(--muted);font-size:19px;line-height:1;cursor:pointer;
+    display:grid;place-items:center;transition:transform .12s}
+  .row .act:active{transform:scale(.92)}
+  .row .did[aria-pressed="true"]{background:var(--bulb);border-color:var(--bulb);color:var(--lake)}
+  .row .rankbtn{font-size:13px;font-family:"Archivo Black",sans-serif}
+  .row .rankbtn.placed{background:var(--heart);border-color:var(--heart);color:#fff}
+
+  /* ---- ranking view ---- */
+  .rank-row{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;
+    background:var(--panel);border-radius:var(--r);border-left:3px solid transparent}
+  .rank-row.top5{border-left-color:var(--bulb);background:var(--panel-2)}
+  .rank-row.first{border-left-width:5px}
+  .pos{font-family:"Archivo Black",sans-serif;font-size:19px;width:34px;flex:0 0 auto;
+    text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  .rank-row.top5 .pos{color:var(--bulb)}
+  .rank-row.first .pos{font-size:26px}
+  .nudge{display:flex;flex-direction:column;gap:3px;flex:0 0 auto}
+  .nudge button{width:38px;height:22px;border-radius:6px;background:rgba(255,255,255,.05);
+    border:1px solid var(--line);color:var(--muted);font-size:11px;cursor:pointer;display:grid;place-items:center}
+  .cut{display:flex;align-items:center;gap:10px;margin:10px 0 12px;color:var(--bulb);
+    font-size:10.5px;letter-spacing:.2em;text-transform:uppercase}
+  .cut::before,.cut::after{content:"";flex:1;border-top:1px dashed rgba(255,210,46,.45)}
+  .empty{background:var(--panel);border:1px dashed var(--line);border-radius:var(--r);
+    padding:22px 16px;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.6}
+
+  /* ---- duel ---- */
+  .duel{position:fixed;inset:0;background:rgba(4,10,16,.94);display:none;
+    flex-direction:column;justify-content:center;padding:20px;z-index:40}
+  .duel.open{display:flex}
+  .duel .q{font-family:"Archivo Black",sans-serif;text-transform:uppercase;font-size:22px;
+    line-height:1.05;text-align:center;margin:0 0 6px}
+  .duel .sub{text-align:center;color:var(--muted);font-size:12.5px;margin:0 0 22px}
+  .card{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;
+    padding:20px 16px;color:var(--ink);font:inherit;text-align:left;cursor:pointer;margin-bottom:12px}
+  .card:active{border-color:var(--bulb)}
+  .card .cn{font-size:19px;font-weight:700;line-height:1.2}
+  .card .cs{font-size:12px;color:var(--muted);margin-top:4px}
+  .vs{text-align:center;color:var(--muted);font-size:11px;letter-spacing:.3em;margin:0 0 12px}
+  .duel .cancel{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:999px;padding:10px;font:inherit;font-size:13px;margin-top:8px;cursor:pointer}
+
+  footer{margin-top:28px;display:flex;flex-direction:column;gap:12px}
+  .note{font-size:11.5px;color:var(--muted);line-height:1.55;margin:0}
+  .acts{display:flex;gap:8px;flex-wrap:wrap}
+  .ghost{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:999px;padding:7px 14px;font:inherit;font-size:12px;cursor:pointer}
+  .status{font-size:11.5px;color:var(--muted);min-height:16px;margin-top:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Sandusky, Ohio · 2026 season</p>
+    <h1>Cedar Point<em>Ride Card</em></h1>
+    <div class="bulbs" id="bulbs" aria-hidden="true"></div>
+    <div class="tally">
+      <span><b id="cCount">0</b> / 18 coasters</span>
+      <span><b id="aCount">0</b> / <span id="aTotal">0</span> rides</span>
+      <span><b id="rCount">0</b> ranked</span>
+    </div>
+    <p class="champ" id="champ"></p>
+    <p class="status" id="status"></p>
+  </header>
+
+  <div class="seg" id="seg">
+    <button data-v="check" aria-pressed="true">Checklist</button>
+    <button data-v="rank" aria-pressed="false">My ranking</button>
+  </div>
+
+  <nav class="filters" id="filters" aria-label="Filter rides">
+    <button data-f="all" aria-pressed="true">Everything</button>
+    <button data-f="Roller coasters" aria-pressed="false">Coasters</button>
+    <button data-f="Thrill rides" aria-pressed="false">Thrill</button>
+    <button data-f="Family &amp; classics" aria-pressed="false">Family</button>
+    <button data-f="todo" aria-pressed="false">Not yet ridden</button>
+    <button data-f="ranked" aria-pressed="false">Ranked</button>
+  </nav>
+
+  <main id="list"></main>
+
+  <footer>
+    <p class="note" id="hint"></p>
+    <div class="acts">
+      <button class="ghost" id="backup">Copy backup code</button>
+      <button class="ghost" id="restore">Restore from code</button>
+      <button class="ghost" id="reset">Clear all</button>
+    </div>
+  </footer>
+</div>
+
+<div class="duel" id="duel" role="dialog" aria-modal="true" aria-labelledby="duelQ">
+  <p class="q" id="duelQ">Which one wins?</p>
+  <p class="sub" id="duelSub"></p>
+  <button class="card" id="cardA"><span class="cn"></span><span class="cs"></span></button>
+  <p class="vs">VS</p>
+  <button class="card" id="cardB"><span class="cn"></span><span class="cs"></span></button>
+  <button class="cancel" id="duelCancel">Cancel</button>
+</div>
+
+<script>
+const RIDES = [
+  {g:"Roller coasters", n:"Siren's Curse", s:"Boardwalk · tilt coaster, 160 ft", tag:"New"},
+  {g:"Roller coasters", n:"Top Thrill 2", s:"Top Thrill Midway · 420 ft, 120 mph", tag:"FL+"},
+  {g:"Roller coasters", n:"Steel Vengeance", s:"Frontier Town · hybrid, 205 ft", tag:"FL+"},
+  {g:"Roller coasters", n:"Millennium Force", s:"Millennium Midway · giga, 310 ft", tag:"FL+"},
+  {g:"Roller coasters", n:"Maverick", s:"Frontier Town · launched, 95° drop", tag:"FL+"},
+  {g:"Roller coasters", n:"Magnum XL-200", s:"Gemini Midway · the original hyper, 205 ft"},
+  {g:"Roller coasters", n:"Valravn", s:"Main Midway · dive coaster, 223 ft", tag:"FL+"},
+  {g:"Roller coasters", n:"GateKeeper", s:"Boardwalk · wing coaster, 170 ft"},
+  {g:"Roller coasters", n:"Raptor", s:"Main Midway · inverted, 137 ft"},
+  {g:"Roller coasters", n:"Rougarou", s:"Millennium Midway · floorless, 145 ft"},
+  {g:"Roller coasters", n:"Gemini", s:"Gemini Midway · racing coaster, 125 ft"},
+  {g:"Roller coasters", n:"Blue Streak", s:"Main Midway · wooden, 1964"},
+  {g:"Roller coasters", n:"Corkscrew", s:"Top Thrill Midway · three inversions, 1976"},
+  {g:"Roller coasters", n:"Iron Dragon", s:"Millennium Midway · suspended"},
+  {g:"Roller coasters", n:"Cedar Creek Mine Ride", s:"Frontier Town · mine train, 1969"},
+  {g:"Roller coasters", n:"Wild Mouse", s:"Boardwalk · spinning coaster"},
+  {g:"Roller coasters", n:"Woodstock Express", s:"Camp Snoopy · junior coaster"},
+  {g:"Roller coasters", n:"Wilderness Run", s:"Camp Snoopy · kiddie credit"},
+
+  {g:"Thrill rides", n:"Power Tower", s:"Top Thrill Midway · shot & drop towers"},
+  {g:"Thrill rides", n:"maXair", s:"Boardwalk · giant frisbee"},
+  {g:"Thrill rides", n:"Skyhawk", s:"Frontier Trail · screamin' swing, 125 ft"},
+  {g:"Thrill rides", n:"WindSeeker", s:"Boardwalk · swings at 301 ft"},
+  {g:"Thrill rides", n:"SlingShot", s:"Gemini Midway · reverse bungee", tag:"Extra $"},
+  {g:"Thrill rides", n:"Professor Delbert's Frontier Fling", s:"Frontier Trail · skycoaster", tag:"Extra $"},
+  {g:"Thrill rides", n:"Pipe Scream", s:"Gemini Midway · skater coaster"},
+  {g:"Thrill rides", n:"Super Himalaya", s:"Top Thrill Midway"},
+  {g:"Thrill rides", n:"Troika", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Matterhorn", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Atomic Scrambler", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Calypso", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Dodgem", s:"Boardwalk · bumper cars"},
+  {g:"Thrill rides", n:"Ocean Motion", s:"Main Midway · pirate ship"},
+  {g:"Thrill rides", n:"Wave Swinger", s:"Frontier Town"},
+  {g:"Thrill rides", n:"Cedar Downs Racing Derby", s:"Main Midway · racing carousel, 1921"},
+
+  {g:"Family & classics", n:"Thunder Canyon", s:"Frontier Trail · river rapids", tag:"Wet"},
+  {g:"Family & classics", n:"Giant Wheel", s:"Boardwalk · 136 ft"},
+  {g:"Family & classics", n:"Sky Ride", s:"Main Midway · gondola"},
+  {g:"Family & classics", n:"Cedar Point & Lake Erie Railroad", s:"Millennium Midway ↔ Frontier Town"},
+  {g:"Family & classics", n:"Midway Carousel", s:"Main Midway · Muller, 1912"},
+  {g:"Family & classics", n:"Cadillac Cars", s:"Main Midway · antique cars"},
+  {g:"Family & classics", n:"Lake Erie Eagles", s:"Gemini Midway"}
+];
+
+const KEY = "cedarpoint-rides-v2";
+const OLD = "cedarpoint-rides-v1";
+const COASTERS = RIDES.filter(r => r.g === "Roller coasters").length;
+const GROUPS = ["Roller coasters","Thrill rides","Family & classics"];
+
+let state = { ridden: [], ranked: [] };   // ranked = ordered keys, best first
+let view = "check", filter = "all";
+
+const $ = i => document.getElementById(i);
+const list = $("list");
+const key = n => n.replace(/[^a-z0-9]/gi,"").toLowerCase();
+const byKey = {}; RIDES.forEach(r => byKey[key(r.n)] = r);
+const nameOf = k => byKey[k] ? byKey[k].n : k;
+
+/* ---------- persistence: artifact storage + localStorage + URL hash ---------- */
+function apply(p){
+  if (!p) return false;
+  state.ridden = Array.isArray(p.ridden) ? p.ridden : [];
+  state.ranked = Array.isArray(p.ranked) ? p.ranked
+               : Array.isArray(p.loved)  ? p.loved.slice()   // migrate v1 hearts
+               : [];
+  state.ranked = state.ranked.filter(k => byKey[k]);
+  return true;
+}
+const enc = () => { try { return btoa(unescape(encodeURIComponent(JSON.stringify(state)))); } catch(e){ return ""; } };
+const dec = s => { try { return JSON.parse(decodeURIComponent(escape(atob(s.trim())))); } catch(e){ return null; } };
+
+const where = [];
+async function load(){
+  let ok = false;
+  for (const k of [KEY, OLD]) {
+    if (ok) break;
+    try { const r = await window.storage.get(k); if (r && r.value && apply(JSON.parse(r.value))) { ok = true; where.push("cloud"); } } catch(e){}
+  }
+  if (!ok) for (const k of [KEY, OLD]) {
+    if (ok) break;
+    try { const raw = localStorage.getItem(k); if (raw && apply(JSON.parse(raw))) ok = true; } catch(e){}
+  }
+  if (!ok && location.hash.length > 1) apply(dec(location.hash.slice(1)));
+  try { localStorage.setItem(KEY+"-p","1"); localStorage.removeItem(KEY+"-p"); where.push("this device"); } catch(e){}
+}
+let t;
+function save(){
+  clearTimeout(t);
+  t = setTimeout(async () => {
+    let ok = false;
+    try { await window.storage.set(KEY, JSON.stringify(state)); ok = true; } catch(e){}
+    try { localStorage.setItem(KEY, JSON.stringify(state)); ok = true; } catch(e){}
+    try { history.replaceState(null,"","#"+enc()); } catch(e){}
+    $("status").textContent = ok
+      ? "Saved to " + (where.length ? [...new Set(where)].join(" + ") : "this page")
+      : "No storage here — copy your backup code to keep this.";
+  }, 250);
+}
+
+/* ---------- ranking by head-to-head placement ---------- */
+let duel = null;   // {k, lo, hi, champ}
+
+function startDuel(k){
+  if (!state.ridden.includes(k)) state.ridden.push(k);
+  const i = state.ranked.indexOf(k);
+  if (i > -1) state.ranked.splice(i,1);
+  if (!state.ranked.length) { state.ranked.push(k); render(); save(); return; }
+  duel = { k, lo:0, hi:state.ranked.length, champ:true };   // always face the current #1 first
+  step();
+}
+
+function step(){
+  if (!duel) return;
+  if (!duel.champ && duel.lo >= duel.hi) {
+    state.ranked.splice(duel.lo, 0, duel.k);
+    duel = null; closeDuel(); render(); save();
+    return;
+  }
+  const pos = duel.champ ? 0 : (duel.lo + duel.hi) >> 1;
+  const a = byKey[duel.k], b = byKey[state.ranked[pos]];
+  $("cardA").querySelector(".cn").textContent = a.n;
+  $("cardA").querySelector(".cs").textContent = a.s;
+  $("cardB").querySelector(".cn").textContent = b.n + "  ·  currently #" + (pos+1);
+  $("cardB").querySelector(".cs").textContent = b.s;
+  $("duelQ").textContent = duel.champ ? "Beat the champ?" : "Which one wins?";
+  const left = duel.champ
+    ? 1 + Math.ceil(Math.log2(Math.max(2, state.ranked.length)))
+    : Math.ceil(Math.log2(Math.max(2, duel.hi - duel.lo)));
+  $("duelSub").textContent = "Placing " + a.n + " · up to " + left + " " + (left === 1 ? "question" : "questions");
+  $("duel").classList.add("open");
+}
+
+function answer(newWins){
+  if (!duel) return;
+  if (duel.champ) {
+    duel.champ = false;
+    if (newWins) {                       // new outright favourite
+      state.ranked.unshift(duel.k);
+      duel = null; closeDuel(); render(); save();
+      return;
+    }
+    duel.lo = 1;                         // lost to #1, so search below it
+  } else {
+    const mid = (duel.lo + duel.hi) >> 1;
+    if (newWins) duel.hi = mid; else duel.lo = mid + 1;
+  }
+  step();
+}
+function closeDuel(){ $("duel").classList.remove("open"); }
+
+$("cardA").addEventListener("click", () => answer(true));
+$("cardB").addEventListener("click", () => answer(false));
+$("duelCancel").addEventListener("click", () => { duel = null; closeDuel(); render(); save(); });
+
+function move(k, d){
+  const i = state.ranked.indexOf(k), j = i + d;
+  if (i < 0 || j < 0 || j >= state.ranked.length) return;
+  state.ranked.splice(j, 0, state.ranked.splice(i,1)[0]);
+  render(); save();
+}
+
+/* ---------- render ---------- */
+function visible(r){
+  const k = key(r.n);
+  if (filter === "all") return true;
+  if (filter === "todo") return !state.ridden.includes(k);
+  if (filter === "ranked") return state.ranked.includes(k);
+  return r.g === filter;
+}
+
+function renderCheck(){
+  let html = "";
+  GROUPS.forEach(g => {
+    const items = RIDES.filter(r => r.g === g && visible(r));
+    if (!items.length) return;
+    html += "<h2>" + g + "</h2>";
+    items.forEach(r => {
+      const k = key(r.n);
+      const did = state.ridden.includes(k);
+      const pos = state.ranked.indexOf(k);
+      html += '<div class="row' + (did ? " ridden" : "") + '">' +
+        '<div class="name"><div class="t">' + r.n + (r.tag ? '<span class="tag">' + r.tag + '</span>' : "") + '</div>' +
+        '<div class="s">' + r.s + '</div></div>' +
+        '<button class="act did" data-k="' + k + '" data-a="ridden" aria-pressed="' + did + '" aria-label="Ridden ' + r.n + '">✓</button>' +
+        '<button class="act rankbtn' + (pos > -1 ? " placed" : "") + '" data-k="' + k + '" data-a="rank" aria-label="Rank ' + r.n + '">' +
+          (pos > -1 ? "#" + (pos+1) : "♥") + '</button></div>';
+    });
+  });
+  list.innerHTML = html || '<div class="empty">No rides match this filter.</div>';
+  $("hint").textContent = "✓ marks a ride done. ♥ places it in your ranking with a few head-to-head questions — tap the number again to re-place it.";
+}
+
+function renderRank(){
+  if (!state.ranked.length) {
+    list.innerHTML = '<div class="empty">Nothing ranked yet.<br>Go to the checklist and tap ♥ on a ride you\u2019ve done. After the first one, each new ride gets slotted in by a few quick this-or-that questions.</div>';
+    $("hint").textContent = "";
+    return;
+  }
+  let html = "";
+  state.ranked.forEach((k, i) => {
+    const r = byKey[k];
+    if (i === 5) html += '<div class="cut">Top 5 cut</div>';
+    html += '<div class="rank-row' + (i < 5 ? " top5" : "") + (i === 0 ? " first" : "") + '">' +
+      '<div class="pos">' + (i+1) + '</div>' +
+      '<div class="name"><div class="t">' + r.n + '</div><div class="s">' + r.s + '</div></div>' +
+      '<div class="nudge">' +
+        '<button data-k="' + k + '" data-a="up" aria-label="Move ' + r.n + ' up">▲</button>' +
+        '<button data-k="' + k + '" data-a="down" aria-label="Move ' + r.n + ' down">▼</button>' +
+      '</div>' +
+      '<button class="act" data-k="' + k + '" data-a="rank" aria-label="Re-place ' + r.n + '">⇄</button>' +
+      '</div>';
+  });
+  list.innerHTML = html;
+  $("hint").textContent = "▲▼ nudges one spot. ⇄ re-places a ride by comparison — useful after a night re-ride changes your mind.";
+}
+
+function render(){
+  const riddenCoasters = RIDES.filter(r => r.g === "Roller coasters" && state.ridden.includes(key(r.n))).length;
+  $("bulbs").innerHTML = Array.from({length: COASTERS}, (_,i) =>
+    '<span class="bulb' + (i < riddenCoasters ? " on" : "") + '"></span>').join("");
+  $("cCount").textContent = riddenCoasters;
+  $("aCount").textContent = state.ridden.length;
+  $("aTotal").textContent = RIDES.length;
+  $("rCount").textContent = state.ranked.length;
+  $("champ").innerHTML = state.ranked.length
+    ? "Number one so far: <b>" + nameOf(state.ranked[0]) + "</b>"
+    : "";
+  $("filters").style.display = view === "check" ? "" : "none";
+  view === "check" ? renderCheck() : renderRank();
+}
+
+list.addEventListener("click", e => {
+  const b = e.target.closest("button[data-k]");
+  if (!b) return;
+  const k = b.dataset.k, a = b.dataset.a;
+  if (a === "ridden") {
+    const i = state.ridden.indexOf(k);
+    if (i > -1) { state.ridden.splice(i,1); const j = state.ranked.indexOf(k); if (j > -1) state.ranked.splice(j,1); }
+    else state.ridden.push(k);
+    render(); save();
+  } else if (a === "rank") { startDuel(k); }
+  else if (a === "up") move(k,-1);
+  else if (a === "down") move(k,1);
+});
+
+$("seg").addEventListener("click", e => {
+  const b = e.target.closest("button[data-v]"); if (!b) return;
+  view = b.dataset.v;
+  [...$("seg").children].forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+});
+
+$("filters").addEventListener("click", e => {
+  const b = e.target.closest("button[data-f]"); if (!b) return;
+  filter = b.dataset.f;
+  [...$("filters").children].forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+});
+
+$("backup").addEventListener("click", async () => {
+  const c = enc();
+  try { await navigator.clipboard.writeText(c); $("status").textContent = "Backup code copied."; }
+  catch(e){ prompt("Copy this backup code:", c); }
+});
+$("restore").addEventListener("click", () => {
+  const c = prompt("Paste a backup code:");
+  if (!c) return;
+  const p = dec(c);
+  if (p && apply(p)) { render(); save(); }
+  else $("status").textContent = "That code didn't read as valid — check for missing characters.";
+});
+$("reset").addEventListener("click", () => {
+  if (!confirm("Clear every tick and your whole ranking?")) return;
+  state = { ridden: [], ranked: [] };
+  render(); save();
+});
+
+(async () => { await load(); render(); })();
+</script>
+</body>
+</html>
