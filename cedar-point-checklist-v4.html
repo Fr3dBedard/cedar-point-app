@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="build" content="2026-08-02d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ride Card">
+<title>Cedar Point — Ride Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --lake:#081420; --panel:#0F2739; --panel-2:#143349;
+    --ink:#E9F2F8; --muted:#7C9CB3;
+    --bulb:#FFD22E; --heart:#FF4D6D;
+    --line:rgba(124,156,179,.22); --r:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--lake);color:var(--ink);
+    font-family:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;padding:0 0 56px}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px}
+
+  header{padding:26px 0 16px;border-bottom:1px solid var(--line);margin-bottom:14px}
+  .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  h1{font-family:"Archivo Black","Space Grotesk",sans-serif;font-size:clamp(30px,9vw,46px);
+    line-height:.94;letter-spacing:-.015em;margin:0 0 16px;text-transform:uppercase}
+  h1 em{font-style:normal;color:var(--bulb);display:block}
+  .bulbs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+  .bulb{width:13px;height:13px;border-radius:50%;background:var(--panel-2);
+    border:1px solid rgba(255,210,46,.25);transition:background .25s,box-shadow .25s}
+  .bulb.on{background:var(--bulb);box-shadow:0 0 10px rgba(255,210,46,.65);border-color:var(--bulb)}
+  .tally{display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  .tally b{font-family:"Archivo Black",sans-serif;font-size:20px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .laps{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:12px 0 0;padding:10px 12px;
+    background:var(--panel);border-radius:var(--r);border-left:3px solid var(--heart);
+    font-size:12.5px;color:var(--muted)}
+  .laps b{font-family:"Archivo Black",sans-serif;font-size:22px;color:var(--heart);
+    font-variant-numeric:tabular-nums;line-height:1}
+  .laps .sep{opacity:.45;padding:0 2px}
+  .lap{display:inline-block;margin-left:6px;font-size:10px;font-weight:700;letter-spacing:.04em;
+    color:#fff;background:var(--heart);border-radius:3px;padding:1px 5px;vertical-align:1px}
+  .champ{font-size:13px;color:var(--muted);margin:10px 0 0}
+  .champ b{color:var(--bulb);font-weight:500}
+
+  .seg{display:flex;gap:6px;background:var(--panel);border-radius:999px;padding:4px;margin:0 0 14px}
+  .seg button{flex:1;background:transparent;border:0;border-radius:999px;padding:9px 8px;
+    color:var(--muted);font:inherit;font-size:14px;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:var(--lake);font-weight:700}
+
+  .filters{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;-webkit-overflow-scrolling:touch}
+  .filters button{flex:0 0 auto;background:transparent;color:var(--muted);border:1px solid var(--line);
+    border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+  .filters button[aria-pressed="true"]{background:var(--ink);color:var(--lake);border-color:var(--ink);font-weight:700}
+  button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+    -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  button:focus-visible{outline:2px solid var(--bulb);outline-offset:2px}
+
+  h2{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:500;
+    margin:24px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  h2:first-child{margin-top:4px}
+  .row{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:6px;
+    background:var(--panel);border-radius:var(--r);border:1px solid transparent}
+  .row.ridden{background:var(--panel-2);border-color:rgba(255,210,46,.28)}
+  .name{flex:1;min-width:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .row.excluded{background:transparent;border:1px dashed var(--line);opacity:.6}
+  .row.excluded .t,.row.excluded .s{text-decoration:line-through;
+    text-decoration-color:rgba(124,156,179,.65);text-decoration-thickness:1px}
+  .row.excluded .t{color:var(--muted);font-weight:400}
+  .tag.ex{background:transparent;border:1px solid var(--muted);color:var(--muted);
+    text-decoration:none;padding:0 4px}
+  .name .t{font-weight:500;font-size:15px;line-height:1.25}
+  .row.ridden .name .t{color:var(--bulb)}
+  .name .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .tag{display:inline-block;margin-left:6px;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--lake);background:var(--muted);border-radius:3px;padding:1px 4px;vertical-align:1px}
+  .row .act{flex:0 0 auto;width:42px;height:42px;border-radius:var(--r);background:rgba(255,255,255,.05);
+    border:1px solid var(--line);color:var(--muted);font-size:19px;line-height:1;cursor:pointer;
+    display:grid;place-items:center;transition:transform .12s}
+  .row .act:active{transform:scale(.92)}
+  .row .did[aria-pressed="true"]{background:var(--bulb);border-color:var(--bulb);color:var(--lake);
+    font-family:"Archivo Black",sans-serif;font-size:15px}
+  .row .rankbtn{font-size:13px;font-family:"Archivo Black",sans-serif}
+  .row .rankbtn.placed{background:var(--heart);border-color:var(--heart);color:#fff}
+
+  /* ---- ranking view ---- */
+  .rank-row{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;
+    background:var(--panel);border-radius:var(--r);border-left:3px solid transparent}
+  .rank-row.top5{border-left-color:var(--bulb);background:var(--panel-2)}
+  .rank-row.first{border-left-width:5px}
+  .pos{font-family:"Archivo Black",sans-serif;font-size:19px;width:34px;flex:0 0 auto;
+    text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  .rank-row.top5 .pos{color:var(--bulb)}
+  .rank-row.first .pos{font-size:26px}
+  .nudge{display:flex;flex-direction:column;gap:3px;flex:0 0 auto}
+  .nudge button{width:38px;height:22px;border-radius:6px;background:rgba(255,255,255,.05);
+    border:1px solid var(--line);color:var(--muted);font-size:11px;cursor:pointer;display:grid;place-items:center}
+  .cut{display:flex;align-items:center;gap:10px;margin:10px 0 12px;color:var(--bulb);
+    font-size:10.5px;letter-spacing:.2em;text-transform:uppercase}
+  .cut::before,.cut::after{content:"";flex:1;border-top:1px dashed rgba(255,210,46,.45)}
+  .empty{background:var(--panel);border:1px dashed var(--line);border-radius:var(--r);
+    padding:22px 16px;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.6}
+
+  /* ---- duel ---- */
+  .duel{position:fixed;inset:0;background:rgba(4,10,16,.94);display:none;
+    flex-direction:column;justify-content:center;padding:20px;z-index:40}
+  .duel.open{display:flex}
+  .duel .q{font-family:"Archivo Black",sans-serif;text-transform:uppercase;font-size:22px;
+    line-height:1.05;text-align:center;margin:0 0 6px}
+  .duel .sub{text-align:center;color:var(--muted);font-size:12.5px;margin:0 0 22px}
+  .card{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;
+    padding:20px 16px;color:var(--ink);font:inherit;text-align:left;cursor:pointer;margin-bottom:12px}
+  .card:active{border-color:var(--bulb)}
+  .card .cn{font-size:19px;font-weight:700;line-height:1.2}
+  .card .cs{font-size:12px;color:var(--muted);margin-top:4px}
+  .vs{text-align:center;color:var(--muted);font-size:11px;letter-spacing:.3em;margin:0 0 12px}
+  .field{width:100%;padding:14px;border-radius:12px;background:var(--panel);color:var(--ink);
+    border:1px solid var(--line);font:inherit;font-size:16px;margin-bottom:12px}
+  .duel .card.ok{text-align:center}
+  .duel .card.ok .cn{font-size:17px}
+  .duel .cancel{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:999px;padding:10px;font:inherit;font-size:13px;margin-top:8px;cursor:pointer}
+
+  footer{margin-top:28px;display:flex;flex-direction:column;gap:12px}
+  .note{font-size:11.5px;color:var(--muted);line-height:1.55;margin:0}
+  .acts{display:flex;gap:8px;flex-wrap:wrap}
+  .ghost{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:999px;padding:7px 14px;font:inherit;font-size:12px;cursor:pointer}
+  .status{font-size:11.5px;color:var(--muted);min-height:16px;margin-top:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Sandusky, Ohio · 2026 season</p>
+    <h1>Cedar Point<em>Ride Card</em></h1>
+    <div class="bulbs" id="bulbs" aria-hidden="true"></div>
+    <div class="tally">
+      <span><b id="cCount">0</b> / <span id="cTotal">18</span> coasters</span>
+      <span><b id="aCount">0</b> / <span id="aTotal">0</span> rides</span>
+      <span><b id="rCount">0</b> ranked</span>
+    </div>
+    <div class="laps" id="laps"></div>
+    <p class="champ" id="champ"></p>
+    <p class="status" id="status"></p>
+  </header>
+
+  <div class="seg" id="seg">
+    <button data-v="check" aria-pressed="true">Checklist</button>
+    <button data-v="rank" aria-pressed="false">My ranking</button>
+  </div>
+
+  <nav class="filters" id="filters" aria-label="Filter rides">
+    <button data-f="all" aria-pressed="true">Everything</button>
+    <button data-f="Roller coasters" aria-pressed="false">Coasters</button>
+    <button data-f="Thrill rides" aria-pressed="false">Thrill</button>
+    <button data-f="Family &amp; classics" aria-pressed="false">Family</button>
+    <button data-f="todo" aria-pressed="false">Not yet ridden</button>
+    <button data-f="repeat" aria-pressed="false">Re-ridden</button>
+    <button data-f="ranked" aria-pressed="false">Ranked</button>
+    <button data-f="excluded" aria-pressed="false">Excluded</button>
+  </nav>
+
+  <main id="list"></main>
+
+  <footer>
+    <p class="note" id="hint"></p>
+    <div class="acts">
+      <button class="ghost" id="backup">Copy backup code</button>
+      <button class="ghost" id="restore">Restore from code</button>
+      <button class="ghost" id="update">Check for update</button>
+      <button class="ghost" id="reset">Clear all</button>
+    </div>
+  </footer>
+</div>
+
+<div class="duel" id="duel" role="dialog" aria-modal="true" aria-labelledby="duelQ">
+  <p class="q" id="duelQ">Which one wins?</p>
+  <p class="sub" id="duelSub"></p>
+  <button class="card" id="cardA"><span class="cn"></span><span class="cs"></span></button>
+  <p class="vs">VS</p>
+  <button class="card" id="cardB"><span class="cn"></span><span class="cs"></span></button>
+  <button class="cancel" id="duelCancel">Cancel</button>
+</div>
+
+<div class="duel" id="ask" role="dialog" aria-modal="true" aria-labelledby="askQ">
+  <p class="q" id="askQ"></p>
+  <p class="sub" id="askS"></p>
+  <input class="field" id="askI" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <button class="card ok" id="askOK"><span class="cn">Confirm</span></button>
+  <button class="cancel" id="askNo">Cancel</button>
+</div>
+
+<script>
+const RIDES = [
+  {g:"Roller coasters", n:"Siren's Curse", s:"Boardwalk · tilt coaster, 160 ft", tag:"New"},
+  {g:"Roller coasters", n:"Top Thrill 2", s:"Top Thrill Midway · 420 ft, 120 mph", tag:"FL+"},
+  {g:"Roller coasters", n:"Steel Vengeance", s:"Frontier Town · hybrid, 205 ft", tag:"FL+"},
+  {g:"Roller coasters", n:"Millennium Force", s:"Millennium Midway · giga, 310 ft", tag:"FL+"},
+  {g:"Roller coasters", n:"Maverick", s:"Frontier Town · launched, 95° drop", tag:"FL+"},
+  {g:"Roller coasters", n:"Magnum XL-200", s:"Gemini Midway · the original hyper, 205 ft"},
+  {g:"Roller coasters", n:"Valravn", s:"Main Midway · dive coaster, 223 ft", tag:"FL+"},
+  {g:"Roller coasters", n:"GateKeeper", s:"Boardwalk · wing coaster, 170 ft"},
+  {g:"Roller coasters", n:"Raptor", s:"Main Midway · inverted, 137 ft"},
+  {g:"Roller coasters", n:"Rougarou", s:"Millennium Midway · floorless, 145 ft"},
+  {g:"Roller coasters", n:"Gemini", s:"Gemini Midway · racing coaster, 125 ft"},
+  {g:"Roller coasters", n:"Blue Streak", s:"Main Midway · wooden, 1964"},
+  {g:"Roller coasters", n:"Corkscrew", s:"Top Thrill Midway · three inversions, 1976"},
+  {g:"Roller coasters", n:"Iron Dragon", s:"Millennium Midway · suspended"},
+  {g:"Roller coasters", n:"Cedar Creek Mine Ride", s:"Frontier Town · mine train, 1969"},
+  {g:"Roller coasters", n:"Wild Mouse", s:"Boardwalk · spinning coaster"},
+  {g:"Roller coasters", n:"Woodstock Express", s:"Camp Snoopy · junior coaster"},
+  {g:"Roller coasters", n:"Wilderness Run", s:"Camp Snoopy · kiddie credit"},
+
+  {g:"Thrill rides", n:"Power Tower", s:"Top Thrill Midway · shot & drop towers"},
+  {g:"Thrill rides", n:"maXair", s:"Boardwalk · giant frisbee"},
+  {g:"Thrill rides", n:"Skyhawk", s:"Frontier Trail · screamin' swing, 125 ft"},
+  {g:"Thrill rides", n:"WindSeeker", s:"Boardwalk · swings at 301 ft"},
+  {g:"Thrill rides", n:"SlingShot", s:"Gemini Midway · reverse bungee", tag:"Extra $"},
+  {g:"Thrill rides", n:"Professor Delbert's Frontier Fling", s:"Frontier Trail · skycoaster", tag:"Extra $"},
+  {g:"Thrill rides", n:"Pipe Scream", s:"Gemini Midway · skater coaster"},
+  {g:"Thrill rides", n:"Super Himalaya", s:"Top Thrill Midway"},
+  {g:"Thrill rides", n:"Troika", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Matterhorn", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Atomic Scrambler", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Calypso", s:"Boardwalk"},
+  {g:"Thrill rides", n:"Dodgem", s:"Boardwalk · bumper cars"},
+  {g:"Thrill rides", n:"Ocean Motion", s:"Main Midway · pirate ship"},
+  {g:"Thrill rides", n:"Wave Swinger", s:"Frontier Town"},
+  {g:"Thrill rides", n:"Cedar Downs Racing Derby", s:"Main Midway · racing carousel, 1921"},
+
+  {g:"Family & classics", n:"Thunder Canyon", s:"Frontier Trail · river rapids", tag:"Wet"},
+  {g:"Family & classics", n:"Giant Wheel", s:"Boardwalk · 136 ft"},
+  {g:"Family & classics", n:"Sky Ride", s:"Main Midway · gondola"},
+  {g:"Family & classics", n:"Cedar Point & Lake Erie Railroad", s:"Millennium Midway ↔ Frontier Town"},
+  {g:"Family & classics", n:"Midway Carousel", s:"Main Midway · Muller, 1912"},
+  {g:"Family & classics", n:"Cadillac Cars", s:"Main Midway · antique cars"},
+  {g:"Family & classics", n:"Lake Erie Eagles", s:"Gemini Midway"}
+];
+
+const KEY = "cedarpoint-rides-v3";
+const LEGACY = ["cedarpoint-rides-v2","cedarpoint-rides-v1"];
+const GROUPS = ["Roller coasters","Thrill rides","Family & classics"];
+
+let state = { counts: {}, ranked: [], excluded: [] };   // counts = key -> rides; ranked = best first
+let view = "check", filter = "all";
+
+const $ = i => document.getElementById(i);
+const list = $("list");
+const key = n => n.replace(/[^a-z0-9]/gi,"").toLowerCase();
+const byKey = {}; RIDES.forEach(r => byKey[key(r.n)] = r);
+const nameOf = k => byKey[k] ? byKey[k].n : k;
+
+const laps = k => state.counts[k] || 0;
+const done = k => laps(k) > 0;
+const isOut = k => state.excluded.includes(k);
+const inPlay = () => RIDES.filter(r => !isOut(key(r.n)));
+const inPlayCoasters = () => inPlay().filter(r => r.g === "Roller coasters");
+const uniqueCount = () => Object.keys(state.counts).filter(k => done(k) && !isOut(k)).length;
+const totalLaps = () => Object.keys(state.counts).reduce((s,k) => s + (isOut(k) ? 0 : laps(k)), 0);
+
+/* ---------- persistence: artifact storage + localStorage + URL hash ---------- */
+function apply(p){
+  if (!p) return false;
+  const c = {};
+  if (p.counts && typeof p.counts === "object") {
+    Object.keys(p.counts).forEach(k => { if (byKey[k] && p.counts[k] > 0) c[k] = p.counts[k]; });
+  } else if (Array.isArray(p.ridden)) {                 // v1/v2: a tick becomes one lap
+    p.ridden.forEach(k => { if (byKey[k]) c[k] = 1; });
+  }
+  state.counts = c;
+  state.ranked = Array.isArray(p.ranked) ? p.ranked
+               : Array.isArray(p.loved)  ? p.loved.slice()
+               : [];
+  state.ranked = state.ranked.filter(k => byKey[k]);
+  state.excluded = Array.isArray(p.excluded) ? p.excluded.filter(k => byKey[k]) : [];
+  return true;
+}
+const enc = () => { try { return btoa(unescape(encodeURIComponent(JSON.stringify(state)))); } catch(e){ return ""; } };
+const dec = s => { try { return JSON.parse(decodeURIComponent(escape(atob(s.trim())))); } catch(e){ return null; } };
+
+const where = [];
+async function load(){
+  let ok = false;
+  for (const k of [KEY, ...LEGACY]) {
+    if (ok) break;
+    try { const r = await window.storage.get(k); if (r && r.value && apply(JSON.parse(r.value))) { ok = true; where.push("cloud"); } } catch(e){}
+  }
+  if (!ok) for (const k of [KEY, ...LEGACY]) {
+    if (ok) break;
+    try { const raw = localStorage.getItem(k); if (raw && apply(JSON.parse(raw))) ok = true; } catch(e){}
+  }
+  if (!ok && location.hash.length > 1) apply(dec(location.hash.slice(1)));
+  try { localStorage.setItem(KEY+"-p","1"); localStorage.removeItem(KEY+"-p"); where.push("this device"); } catch(e){}
+}
+let t;
+function save(){
+  clearTimeout(t);
+  t = setTimeout(async () => {
+    let ok = false;
+    try { await window.storage.set(KEY, JSON.stringify(state)); ok = true; } catch(e){}
+    try { localStorage.setItem(KEY, JSON.stringify(state)); ok = true; } catch(e){}
+    try { history.replaceState(null,"","#"+enc()); } catch(e){}
+    $("status").textContent = ok
+      ? "Saved to " + (where.length ? [...new Set(where)].join(" + ") : "this page")
+      : "No storage here — copy your backup code to keep this.";
+  }, 250);
+}
+
+/* ---------- self-update: iOS home-screen apps cache the HTML hard ----------
+   Ask the server for this page with a cache-busting query, compare its build
+   stamp to the running one, and if it differs reload under a brand-new URL —
+   which the cache has never seen, so it has to fetch it fresh.              */
+const BUILD = (document.querySelector('meta[name="build"]') || {}).content || "0";
+let checking = false;
+
+async function checkUpdate(manual){
+  if (checking) return;
+  checking = true;
+  if (manual) $("status").textContent = "Checking for a new version…";
+  try {
+    const url = location.pathname + "?_=" + Date.now();
+    const res = await fetch(url, { cache: "no-store" });
+    const html = await res.text();
+    const m = html.match(/<meta\s+name="build"\s+content="([^"]+)"/i);
+    if (m && m[1] !== BUILD) {
+      $("status").textContent = "New version found — reloading…";
+      location.replace(location.pathname + "?b=" + encodeURIComponent(m[1]) + location.hash);
+      return;
+    }
+    if (manual) $("status").textContent = "You're on the latest version (" + BUILD + ").";
+  } catch(e){
+    if (manual) $("status").textContent = "No connection — can't check right now.";
+  }
+  checking = false;
+}
+
+document.addEventListener("visibilitychange", () => { if (!document.hidden) checkUpdate(false); });
+let duel = null;   // {k, lo, hi, champ}
+
+function startDuel(k){
+  if (!done(k)) state.counts[k] = 1;
+  const i = state.ranked.indexOf(k);
+  if (i > -1) state.ranked.splice(i,1);
+  if (!state.ranked.length) { state.ranked.push(k); render(); save(); return; }
+  duel = { k, lo:0, hi:state.ranked.length, champ:true };   // always face the current #1 first
+  step();
+}
+
+function step(){
+  if (!duel) return;
+  if (!duel.champ && duel.lo >= duel.hi) {
+    state.ranked.splice(duel.lo, 0, duel.k);
+    duel = null; closeDuel(); render(); save();
+    return;
+  }
+  const pos = duel.champ ? 0 : (duel.lo + duel.hi) >> 1;
+  const a = byKey[duel.k], b = byKey[state.ranked[pos]];
+  $("cardA").querySelector(".cn").textContent = a.n;
+  $("cardA").querySelector(".cs").textContent = a.s;
+  $("cardB").querySelector(".cn").textContent = b.n + "  ·  currently #" + (pos+1);
+  $("cardB").querySelector(".cs").textContent = b.s;
+  $("duelQ").textContent = duel.champ ? "Beat the champ?" : "Which one wins?";
+  const left = duel.champ
+    ? 1 + Math.ceil(Math.log2(Math.max(2, state.ranked.length)))
+    : Math.ceil(Math.log2(Math.max(2, duel.hi - duel.lo)));
+  $("duelSub").textContent = "Placing " + a.n + " · up to " + left + " " + (left === 1 ? "question" : "questions");
+  $("duel").classList.add("open");
+}
+
+function answer(newWins){
+  if (!duel) return;
+  if (duel.champ) {
+    duel.champ = false;
+    if (newWins) {                       // new outright favourite
+      state.ranked.unshift(duel.k);
+      duel = null; closeDuel(); render(); save();
+      return;
+    }
+    duel.lo = 1;                         // lost to #1, so search below it
+  } else {
+    const mid = (duel.lo + duel.hi) >> 1;
+    if (newWins) duel.hi = mid; else duel.lo = mid + 1;
+  }
+  step();
+}
+function closeDuel(){ $("duel").classList.remove("open"); }
+
+$("cardA").addEventListener("click", () => answer(true));
+$("cardB").addEventListener("click", () => answer(false));
+$("duelCancel").addEventListener("click", () => { duel = null; closeDuel(); render(); save(); });
+
+function move(k, d){
+  const i = state.ranked.indexOf(k), j = i + d;
+  if (i < 0 || j < 0 || j >= state.ranked.length) return;
+  state.ranked.splice(j, 0, state.ranked.splice(i,1)[0]);
+  render(); save();
+}
+
+/* ---------- render ---------- */
+function visible(r){
+  const k = key(r.n);
+  if (filter === "all") return true;
+  if (filter === "excluded") return isOut(k);
+  if (isOut(k)) return false;
+  if (filter === "todo") return !done(k);
+  if (filter === "repeat") return laps(k) > 1;
+  if (filter === "ranked") return state.ranked.includes(k);
+  return r.g === filter;
+}
+
+function renderCheck(){
+  let html = "";
+  GROUPS.forEach(g => {
+    const items = RIDES.filter(r => r.g === g && visible(r));
+    if (!items.length) return;
+    html += "<h2>" + g + "</h2>";
+    items.forEach(r => {
+      const k = key(r.n);
+      if (isOut(k)) {
+        html += '<div class="row excluded" data-k="' + k + '">' +
+          '<div class="name"><div class="t">' + r.n + '<span class="tag ex">Excluded' +
+            (laps(k) ? ' · ×' + laps(k) + ' kept' : '') + '</span></div>' +
+          '<div class="s">' + r.s + '</div></div>' +
+          '<button class="act" data-k="' + k + '" data-a="include" aria-label="Put ' + r.n + ' back in">↺</button>' +
+          '</div>';
+        return;
+      }
+      const n = laps(k);
+      const pos = state.ranked.indexOf(k);
+      html += '<div class="row' + (n ? " ridden" : "") + '" data-k="' + k + '">' +
+        '<div class="name"><div class="t">' + r.n + (r.tag ? '<span class="tag">' + r.tag + '</span>' : "") +
+          (n > 1 ? '<span class="lap">×' + n + '</span>' : "") + '</div>' +
+        '<div class="s">' + r.s + '</div></div>' +
+        '<button class="act did" data-k="' + k + '" data-a="lap" aria-pressed="' + (n > 0) + '" aria-label="Add a ride on ' + r.n + ', ridden ' + n + ' times">' +
+          (n ? n : "✓") + '</button>' +
+        '<button class="act rankbtn' + (pos > -1 ? " placed" : "") + '" data-k="' + k + '" data-a="rank" aria-label="' +
+          (pos > -1 ? "Remove " + r.n + " from the ranking, currently number " + (pos+1) : "Rank " + r.n) + '">' +
+          (pos > -1 ? "#" + (pos+1) : "♥") + '</button></div>';
+    });
+  });
+  list.innerHTML = html || '<div class="empty">No rides match this filter.</div>';
+  $("hint").textContent = "Tap ✓ each time you ride — it counts. Hold ✓ to take one back. ♥ ranks it; tap the number to unrank, hold it to re-place. Hold a ride's name to exclude it from your totals.";
+}
+
+function renderRank(){
+  if (!state.ranked.length) {
+    list.innerHTML = '<div class="empty">Nothing ranked yet.<br>Go to the checklist and tap ♥ on a ride you\u2019ve done. After the first one, each new ride gets slotted in by a few quick this-or-that questions.</div>';
+    $("hint").textContent = "";
+    return;
+  }
+  let html = "";
+  state.ranked.forEach((k, i) => {
+    const r = byKey[k];
+    if (i === 5) html += '<div class="cut">Top 5 cut</div>';
+    html += '<div class="rank-row' + (i < 5 ? " top5" : "") + (i === 0 ? " first" : "") + '">' +
+      '<div class="pos">' + (i+1) + '</div>' +
+      '<div class="name"><div class="t">' + r.n + (laps(k) > 1 ? '<span class="lap">×' + laps(k) + '</span>' : "") + '</div><div class="s">' + r.s + '</div></div>' +
+      '<div class="nudge">' +
+        '<button data-k="' + k + '" data-a="up" aria-label="Move ' + r.n + ' up">▲</button>' +
+        '<button data-k="' + k + '" data-a="down" aria-label="Move ' + r.n + ' down">▼</button>' +
+      '</div>' +
+      '<button class="act" data-k="' + k + '" data-a="replace" aria-label="Re-place ' + r.n + '">⇄</button>' +
+      '</div>';
+  });
+  list.innerHTML = html;
+  $("hint").textContent = "▲▼ nudges one spot. ⇄ re-places a ride by comparison — useful after a night re-ride changes your mind.";
+}
+
+function render(){
+  const coasters = inPlayCoasters();
+  const riddenCoasters = coasters.filter(r => done(key(r.n))).length;
+  $("bulbs").innerHTML = Array.from({length: coasters.length}, (_,i) =>
+    '<span class="bulb' + (i < riddenCoasters ? " on" : "") + '"></span>').join("");
+  $("cCount").textContent = riddenCoasters;
+  $("cTotal").textContent = coasters.length;
+  $("aCount").textContent = uniqueCount();
+  $("aTotal").textContent = inPlay().length;
+  $("rCount").textContent = state.ranked.length;
+
+  const total = totalLaps(), extra = total - uniqueCount();
+  const most = Object.keys(state.counts).sort((a,b) => laps(b) - laps(a))[0];
+  $("laps").innerHTML = total
+    ? '<b>' + total + '</b> rides in total' +
+      (extra ? '<span class="sep">·</span>' + extra + ' of them re-rides' : "") +
+      (most && laps(most) > 1 ? '<span class="sep">·</span>most re-ridden: ' + nameOf(most) + ' ×' + laps(most) : "")
+    : '<b>0</b> rides so far — tap ✓ on a ride each time you get off it';
+
+  $("champ").innerHTML = state.ranked.length
+    ? "Number one so far: <b>" + nameOf(state.ranked[0]) + "</b>"
+    : "";
+  $("filters").style.display = view === "check" ? "" : "none";
+  view === "check" ? renderCheck() : renderRank();
+}
+
+/* ---------- in-page dialogs ----------
+   iOS suppresses native confirm/prompt when they aren't fired straight from a
+   user gesture — a hold timer isn't one — and in home-screen apps generally. */
+let askResolve = null;
+function ask(o){
+  return new Promise(res => {
+    askResolve = res;
+    $("askQ").textContent = o.title;
+    $("askS").textContent = o.message || "";
+    const f = $("askI");
+    f.style.display = o.input ? "" : "none";
+    f.value = o.value || "";
+    $("askOK").querySelector(".cn").textContent = o.ok || "Confirm";
+    $("ask").classList.add("open");
+    if (o.input) setTimeout(() => { f.focus(); f.select(); }, 60);
+  });
+}
+function closeAsk(v){
+  $("ask").classList.remove("open");
+  if (askResolve) { const r = askResolve; askResolve = null; r(v); }
+}
+$("askOK").addEventListener("click", () =>
+  closeAsk($("askI").style.display === "none" ? true : $("askI").value.trim()));
+$("askNo").addEventListener("click", () => closeAsk(false));
+
+/* press and hold a ride name to exclude it (height limits, closed, not for us).
+   Exclusion is lossless: the ride count is kept and comes back on restore. */
+async function toggleExclude(k){
+  const i = state.excluded.indexOf(k);
+  if (i > -1) { state.excluded.splice(i,1); render(); save(); return; }
+  const j = state.ranked.indexOf(k);
+  if (j > -1) {
+    const yes = await ask({
+      title: "Exclude " + nameOf(k) + "?",
+      message: "It's ranked #" + (j+1) + ", and excluding drops it from the ranking. Your ride count is kept either way.",
+      ok: "Exclude it"
+    });
+    if (!yes) return;
+    state.ranked.splice(state.ranked.indexOf(k), 1);
+  }
+  state.excluded.push(k);
+  render(); save();
+}
+
+/* tap the ✓ to add a ride, press and hold to take one back */
+let holdTimer = null, heldKey = null;
+
+function addLap(k, d){
+  const n = Math.max(0, laps(k) + d);
+  if (n) state.counts[k] = n;
+  else {
+    delete state.counts[k];
+    const j = state.ranked.indexOf(k);
+    if (j > -1) state.ranked.splice(j,1);   // not ridden, not ranked
+  }
+  render(); save();
+}
+
+list.addEventListener("contextmenu", e => {
+  if (e.target.closest('button[data-a="lap"]') || e.target.closest(".name")) e.preventDefault();
+});
+
+list.addEventListener("pointerdown", e => {
+  const b = e.target.closest('button[data-a="lap"]');
+  const rk = e.target.closest('button[data-a="rank"]');
+  const nm = e.target.closest(".name");
+  const row = e.target.closest(".row");
+  heldKey = null;
+  if (b) {
+    holdTimer = setTimeout(() => {
+      heldKey = b.dataset.k;
+      addLap(heldKey, -1);
+      if (navigator.vibrate) navigator.vibrate(15);
+    }, 450);
+  } else if (rk) {
+    holdTimer = setTimeout(() => {
+      heldKey = rk.dataset.k;
+      if (state.ranked.includes(heldKey)) startDuel(heldKey);   // re-place, don't unrank
+      if (navigator.vibrate) navigator.vibrate(25);
+    }, 450);
+  } else if (nm && row && row.dataset.k) {
+    holdTimer = setTimeout(() => {
+      heldKey = row.dataset.k;
+      toggleExclude(heldKey);
+      if (navigator.vibrate) navigator.vibrate(25);
+    }, 450);
+  }
+});
+["pointerup","pointercancel","pointerleave"].forEach(ev =>
+  list.addEventListener(ev, () => clearTimeout(holdTimer)));
+
+function unrank(k){
+  const i = state.ranked.indexOf(k);
+  if (i > -1) state.ranked.splice(i,1);
+  render(); save();
+}
+
+list.addEventListener("click", e => {
+  const b = e.target.closest("button[data-k]");
+  if (!b) return;
+  const k = b.dataset.k, a = b.dataset.a;
+  if (heldKey === k) { heldKey = null; return; }   // a hold already handled this one
+  if (a === "lap") addLap(k, 1);
+  else if (a === "rank") state.ranked.includes(k) ? unrank(k) : startDuel(k);
+  else if (a === "replace") startDuel(k);
+  else if (a === "include") toggleExclude(k);
+  else if (a === "up") move(k,-1);
+  else if (a === "down") move(k,1);
+});
+
+$("seg").addEventListener("click", e => {
+  const b = e.target.closest("button[data-v]"); if (!b) return;
+  view = b.dataset.v;
+  [...$("seg").children].forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+});
+
+$("filters").addEventListener("click", e => {
+  const b = e.target.closest("button[data-f]"); if (!b) return;
+  filter = b.dataset.f;
+  [...$("filters").children].forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+});
+
+$("backup").addEventListener("click", async () => {
+  const c = enc();
+  try {
+    await navigator.clipboard.writeText(c);
+    $("status").textContent = "Backup code copied.";
+  } catch(e){
+    await ask({ title:"Your backup code", message:"Select it and copy, then keep it somewhere safe.",
+                input:true, value:c, ok:"Done" });
+  }
+});
+$("restore").addEventListener("click", async () => {
+  const c = await ask({ title:"Restore", message:"Paste a backup code.", input:true, ok:"Restore" });
+  if (!c) return;
+  const p = dec(c);
+  if (p && apply(p)) { render(); save(); $("status").textContent = "Restored."; }
+  else $("status").textContent = "That code didn't read as valid — check for missing characters.";
+});
+$("reset").addEventListener("click", async () => {
+  const yes = await ask({ title:"Clear everything?",
+    message:"Wipes every ride count and your whole ranking. Your exclusions stay.", ok:"Clear it all" });
+  if (!yes) return;
+  state = { counts: {}, ranked: [], excluded: state.excluded };
+  render(); save();
+});
+
+$("update").addEventListener("click", () => checkUpdate(true));
+
+(async () => { await load(); render(); checkUpdate(false); })();
+</script>
+</body>
+</html>
